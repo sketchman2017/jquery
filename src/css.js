@@ -29,6 +29,7 @@ var
 	// See here for display values: https://developer.mozilla.org/en-US/docs/CSS/display
 	rdisplayswap = /^(none|table(?!-c[ea]).+)/,
 	rcustomProp = /^--/,
+	rimportant = /!important$/i,
 	cssShow = { position: "absolute", visibility: "hidden", display: "block" },
 	cssNormalTransform = {
 		letterSpacing: "0",
@@ -244,7 +245,9 @@ jQuery.extend( {
 		var ret, type, hooks,
 			origName = jQuery.camelCase( name ),
 			isCustomProp = rcustomProp.test( name ),
-			style = elem.style;
+			style = elem.style,
+			oldName = name,
+			importantPos;
 
 		// Make sure that we're working with the right name. We don't
 		// want to query the value if it is a CSS custom property
@@ -281,6 +284,15 @@ jQuery.extend( {
 			// background-* props affect original clone's values
 			if ( !support.clearCloneStyle && value === "" && name.indexOf( "background" ) === 0 ) {
 				style[ name ] = "inherit";
+			}
+
+			// If value has !important priority do setProperty
+			value = value.trim();
+
+			if ( ( importantPos = value.search( rimportant ) ) !== -1 ) {
+				value = value.substring( 0, importantPos ).trim();
+				style.setProperty( oldName, value, "important" );
+				return;
 			}
 
 			// If a hook was provided, use that value, otherwise just set the specified value
